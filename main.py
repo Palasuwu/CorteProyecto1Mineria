@@ -9,8 +9,8 @@ import os
 # =============================================================================
 # Rutas exactas proporcionadas
 RUTAS = {
-    "MATRIMONIOS": "/Users/pala/Desktop/Proyecto_1_Mineria/data_matrimonios",
-    "DIVORCIOS":   "/Users/pala/Desktop/Proyecto_1_Mineria/data_divorcios " # Ajuste: eliminé el espacio extra al final si lo hubiera
+    "MATRIMONIOS": "./data_matrimonios",
+    "DIVORCIOS":   "./data_divorcios " # Ajuste: eliminé el espacio extra al final si lo hubiera
 }
 
 # =============================================================================
