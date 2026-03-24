@@ -12,10 +12,10 @@ from sklearn.metrics import confusion_matrix
 # =============================================================================
 # 1. CONFIGURACIÓN DE RUTAS
 # =============================================================================
-# Rutas exactas proporcionadas
+# Rutas absolutas para evitar errores de ruta relativa
 RUTAS = {
-    "MATRIMONIOS": "./data_matrimonios",
-    "DIVORCIOS":   "./data_divorcios " # Ajuste: eliminé el espacio extra al final si lo hubiera
+    "MATRIMONIOS": "c:\\Users\\angge\\mineria\\CorteProyecto1Mineria\\data_matrimonios",
+    "DIVORCIOS":   "c:\\Users\\angge\\mineria\\CorteProyecto1Mineria\\data_divorcios"
 }
 
 # =============================================================================
@@ -136,33 +136,58 @@ print("TIP: Para el punto de 'Relaciones entre variables' [cite: 39]")
 print("Intenta cruzar la EDAD con el DEPARTAMENTO o la OCUPACIÓN.")
 print("="*60)
 
-# Asumiendo df_master ya está limpio (de compañeros)
-# Crear variable objetivo: 1 para divorcios, 0 para matrimonios
-df_master['DIVORCIO'] = df_master['ARCHIVO_ORIGEN'].str.contains('divorcios').astype(int)
+# =============================================================================
+# 5. CREACIÓN DE df_master Y MODELADO PREDICTIVO
+# =============================================================================
+# Unimos matrimonios y divorcios con etiqueta para predicción
+if df_matrimonios is not None and df_divorcios is not None:
+    df_matrimonios['DIVORCIO'] = 0
+    df_divorcios['DIVORCIO'] = 1
+    # Agregamos columna estándar de edad si no existe
+    for col in ['EDADHOM', 'EDAD_HOMBRE']:
+        if col in df_matrimonios.columns and 'EDAD_HOMBRE' not in df_matrimonios.columns:
+            df_matrimonios['EDAD_HOMBRE'] = df_matrimonios[col]
+            df_divorcios['EDAD_HOMBRE'] = df_divorcios.get('EDADHOM', df_divorcios.get('EDAD_HOMBRE'))
+            break
+    for col in ['EDADMUJ', 'EDAD_MUJER']:
+        if col in df_matrimonios.columns and 'EDAD_MUJER' not in df_matrimonios.columns:
+            df_matrimonios['EDAD_MUJER'] = df_matrimonios[col]
+            df_divorcios['EDAD_MUJER'] = df_divorcios.get('EDADMUJ', df_divorcios.get('EDAD_MUJER'))
+            break
 
-# Seleccionar features
-features = ['EDAD_HOMBRE', 'EDAD_MUJER', 'DIFERENCIA_EDAD']
-X = df_master[features]
-y = df_master['DIVORCIO']
+    df_master = pd.concat([df_matrimonios, df_divorcios], ignore_index=True)
 
-# Dividir en train/test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Algunas variables derivadas que ya estaban en exploración
+    if 'EDAD_HOMBRE' in df_master.columns and 'EDAD_MUJER' in df_master.columns:
+        df_master['DIFERENCIA_EDAD'] = (df_master['EDAD_HOMBRE'] - df_master['EDAD_MUJER']).abs()
 
-# Entrenar modelo
-model = LogisticRegression()
-model.fit(X_train, y_train)
+    # Features mínimos para el modelo
+    required_features = ['EDAD_HOMBRE', 'EDAD_MUJER', 'DIFERENCIA_EDAD']
+    if all(c in df_master.columns for c in required_features):
+        df_model = df_master.dropna(subset=required_features + ['DIVORCIO'])
 
-# Predecir y evaluar
-y_pred = model.predict(X_test)
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print(classification_report(y_test, y_pred))
+        X = df_model[required_features]
+        y = df_model['DIVORCIO']
 
-# Validación cruzada
-scores = cross_val_score(model, X, y, cv=5)
-print("Cross-validation scores:", scores.mean())
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Matriz de confusión
-cm = confusion_matrix(y_test, y_pred)
-sns.heatmap(cm, annot=True, fmt='d')
-plt.title('Matriz de Confusión')
-plt.show()
+        model = LogisticRegression(max_iter=1000)
+        model.fit(X_train, y_train)
+
+        y_pred = model.predict(X_test)
+        print("Accuracy:", accuracy_score(y_test, y_pred))
+        print(classification_report(y_test, y_pred, zero_division=0))
+
+        scores = cross_val_score(model, X, y, cv=5)
+        print("Cross-validation score promedio:", scores.mean())
+
+        cm = confusion_matrix(y_test, y_pred)
+        sns.heatmap(cm, annot=True, fmt='d')
+        plt.title('Matriz de Confusión')
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.show()
+    else:
+        print('⚠️ No se encontraron todas las columnas requeridas para modelar:', required_features)
+else:
+    print('⚠️ No se pudo crear df_master para modelado porque faltan datos de uno de los conjuntos.')
