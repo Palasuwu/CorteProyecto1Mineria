@@ -6,6 +6,8 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import confusion_matrix
 
 # =============================================================================
 # 1. CONFIGURACIÓN DE RUTAS
@@ -154,3 +156,13 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))
+
+# Validación cruzada
+scores = cross_val_score(model, X, y, cv=5)
+print("Cross-validation scores:", scores.mean())
+
+# Matriz de confusión
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d')
+plt.title('Matriz de Confusión')
+plt.show()
