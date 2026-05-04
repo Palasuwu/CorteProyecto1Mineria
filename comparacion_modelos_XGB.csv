@@ -1,0 +1,5 @@
+label,Modelo,Accuracy,Precision,Recall,F1-score,ROC-AUC
+Modelo 1 (conservador),Modelo 1 (conservador),0.4452,0.137,0.983,0.2405,0.7584
+Modelo 2 (profundo),Modelo 2 (profundo),0.4713,0.1415,0.9704,0.247,0.7556
+Modelo 3 (regularizado),Modelo 3 (regularizado),0.4613,0.1399,0.9766,0.2447,0.7563
+,Modelo Optimizado XGB,0.8981,0.1728,0.0371,0.0611,0.7471
